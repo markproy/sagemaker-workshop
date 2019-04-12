@@ -13,4 +13,4 @@ Click on the **Files** tab and open the new folder created. Click on the Jupyter
 
 Navigate to the notebook and follow the documentation provided in the sample notebook. Be sure to increase the
 number of epochs if you would like to have the test image classified properly. The notebook defaults to 5, but
-10 epochs should achieve sufficient accuracy.
+10 epochs should achieve sufficient accuracy. Also, `checkpoint_frequency=1` and `use_pretrained_model=1`.
