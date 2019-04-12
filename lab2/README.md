@@ -11,4 +11,6 @@ click **Use**.
 Click on the **Files** tab and open the new folder created. Click on the Jupyter notebook called 
 **Image-classification-fulltraining-highlevel.ipynb** to start the lab.
 
-Navigate to the notebook and follow the documentation provided in the sample notebook.
+Navigate to the notebook and follow the documentation provided in the sample notebook. Be sure to increase the
+number of epochs if you would like to have the test image classified properly. The notebook defaults to 5, but
+25 epochs is more appropriate.
