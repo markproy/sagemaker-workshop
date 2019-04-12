@@ -11,6 +11,6 @@ click **Use**.
 Click on the **Files** tab and open the new folder created. Click on the Jupyter notebook called 
 **Image-classification-fulltraining-highlevel.ipynb** to start the lab.
 
-Navigate to the notebook and follow the documentation provided in the sample notebook. Be sure to increase the
-number of epochs if you would like to have the test image classified properly. The notebook defaults to 5, but
-10 epochs should achieve sufficient accuracy. Also, `checkpoint_frequency=1` and `use_pretrained_model=1`.
+Navigate to the notebook and follow the documentation provided in the sample notebook. For better results, set 
+use transfer learning by changing the following hyperparameter: `use_pretrained_model=1`. Also, to reduce training time,
+only save checkpoints at the end of the training job: `checkpoint_frequency=5`.
