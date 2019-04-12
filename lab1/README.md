@@ -7,6 +7,8 @@ Inside of your notebook instance, navigate to the **SageMaker Examples** tab. Ex
 called **Introduction to Applying Machine Learning**. Find the line called **xgboost_customer_churn** and
 click **Use**.
 
+Click on the **Files** tab and open the new folder created. Click on the Jupyter notebook to start the lab.
+
 Be sure to change the S3 bucket name in the first cell.
 
 Navigate to the notebook and follow the documentation provided in the sample notebook.
