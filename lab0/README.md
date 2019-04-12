@@ -28,20 +28,18 @@ SageMaker is not available in all AWS Regions at this time.  Accordingly, we rec
 
 We recommend you use the latest version of Chrome or Firefox to complete this workshop.
 
-## Modules
+## Labs
 
-This workshop is divided into multiple modules. Module 1 must be completed first. You can complete the other modules (Modules 2 and 3) in any order.  
+This workshop is divided into multiple labs. Lab 0 must be completed first. You can complete the other 
+labs in any order. The focus of this lab is to create your first notebook instance.
 
-1. Creating a Notebook Instance
-2. Run SageMaker Notebook
-
-Be patient as you work your way through the notebook-based modules. After you run a cell in a notebook, it may take several seconds for the code to show results. For the cells that start training jobs, it may take 10 to 30 minutes. 
+Be patient as you work your way through the notebook-based labs. After you run a cell in a notebook, it may take several seconds for the code to show results. For the cells that start training jobs, it may take 10 to 30 minutes. 
 
 After you have completed the workshop, you can delete all of the resources that were created by following the Cleanup Guide provided with this lab guide. 
 
-## Module 1:  Creating a Notebook Instance
+## Creating a Notebook Instance
 
-In this module, we'll start by creating an Amazon S3 bucket that will be used throughout the workshop.  We'll then create a SageMaker notebook instance, which we will use to run the other workshop modules.
+In this section, we'll start by creating an Amazon S3 bucket that will be used throughout the workshop.  We'll then create an Amazon SageMaker notebook instance, which we will use to run the other workshop labs.
 
 ### 1. Create a S3 Bucket
 
@@ -111,7 +109,7 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 3. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
 
-4) Follow the instructions in the notebook to complete the lab
+4. Follow the instructions in the notebook to complete the lab
 
 
 
