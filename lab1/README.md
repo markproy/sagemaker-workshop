@@ -7,3 +7,5 @@ called **Introduction to Amazon Algorithms**. Find the line called **xgboost_aba
 click **Use**.
 
 Navigate to the notebook and follow the documentation provided in the sample notebook.
+
+**abalone example is not logistic regression**
