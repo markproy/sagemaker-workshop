@@ -1,5 +1,5 @@
-# Use built-in XGBoost algorithm to do logistic regression
-In this lab, you will train and use a model to do logistic regression, 
+# Use built-in XGBoost algorithm to perform logistic regression
+In this lab, you will train and use a model to perform logistic regression, 
 taking advantage of the built-in XGBoost algorithm in SageMaker. The use case is for predicting
 customer churn for a mobile phone company.
 
