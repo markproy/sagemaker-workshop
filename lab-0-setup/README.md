@@ -103,13 +103,17 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 ### 4. Access workshop content
 
-1. Click on the **SageMaker Examples** tab and expand a section to display a list of notebook labs
+1. Open a new terminal window from your notebook instance.
 
-2. Click on the **Use** button next to a notebook (e.g., DeepAR-Electricity.ipynb) to download the lab
+2. From the terminal window, clone the workshop repository using the following command: `git clone https://github.com/markproy/sagemaker-workshop.git`
 
-3. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
+3. For some of the labs, you will use the **SageMaker Examples** tab and expand a section to display a list of notebooks
 
-4. Follow the instructions in the notebook to complete the lab
+4. Click on the **Use** button next to a notebook (e.g., DeepAR-Electricity.ipynb) to download the lab
+
+5. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
+
+6. Follow the instructions in the notebook to complete the lab
 
 
 
