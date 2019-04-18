@@ -1,3 +1,7 @@
 # Bring your own container
 
-Use the sample notebook in the `SageMaker Examples` tab. The notebook is in the `asdf` folder, and is called `asdf.ipynb`.
+In this lab, you perform
+
+You will leverage a notebook from `SageMaker Examples`. Expand the section called `Advanced Functionality` and use the `tensorflow_bring_your_own.ipynb` notebook.
+
+Follow the detailed instructions in the notebooks (in the order above) to complete the lab.
