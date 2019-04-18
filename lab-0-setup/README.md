@@ -30,12 +30,12 @@ We recommend you use the latest version of Chrome or Firefox to complete this wo
 
 ## Labs
 
-This workshop is divided into multiple labs. Lab 0 must be completed first. You can complete the other 
+This workshop is divided into multiple labs. Lab 0 must be completed first. You can complete the other
 labs in any order. The focus of this lab is to create your first notebook instance.
 
-Be patient as you work your way through the notebook-based labs. After you run a cell in a notebook, it may take several seconds for the code to show results. For the cells that start training jobs, it may take 10 to 30 minutes. 
+Be patient as you work your way through the notebook-based labs. After you run a cell in a notebook, it may take several seconds for the code to show results. For the cells that start training jobs, it may take 10 to 30 minutes.
 
-After you have completed the workshop, you can delete all of the resources that were created by following the Cleanup Guide provided with this lab guide. 
+After you have completed the workshop, you can delete all of the resources that were created by following the Cleanup Guide provided with this lab guide.
 
 ## Creating a Notebook Instance
 
@@ -103,17 +103,17 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 ### 4. Access workshop content
 
-1. Open a new terminal window from your notebook instance.
+1. Open a new terminal window from your notebook instance. From the `Files` tab in your notebook instance, click on `New` / `Terminal`.
 
 2. From the terminal window, clone the workshop repository using the following command: `git clone https://github.com/markproy/sagemaker-workshop.git`
 
-3. For some of the labs, you will use the **SageMaker Examples** tab and expand a section to display a list of notebooks
+3. For some of the labs, you will use the **SageMaker Examples** tab and locate a lab notebook in one of several groups of notebooks.
 
-4. Click on the **Use** button next to a notebook (e.g., DeepAR-Electricity.ipynb) to download the lab
+4. Click on the **Use** button next to the notebook (e.g., DeepAR-Electricity.ipynb) to download the lab.
 
 5. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
 
-6. Follow the instructions in the notebook to complete the lab
+6. Follow the instructions in the notebook to complete the lab.
 
 
 
@@ -127,4 +127,4 @@ To avoid charges for resources you no longer need when you're done with this wor
 
 ## License
 
-The contents of this workshop are licensed under the Apache 2.0 License. 
+The contents of this workshop are licensed under the Apache 2.0 License.
