@@ -4,4 +4,4 @@ In this lab, you learn how to define your own custom machine learning model. The
 
 In the [setup lab](../lab-0-setup/README.md), you cloned the workshop GitHub repository. Navigate to the `lab-bring-your-own-tensorflow` folder in the workshop and open the provided Jupyter notebook. The notebook synthesizes a claims dataset and builds a logistic regression network to predict whether the claim represents a total loss.
 
-Follow the instructions in the notebook to complete the lab.
+Follow the instructions in the notebook to complete the lab. You will first set a USER_PREFIX based on your name or username. This will provide a prefix for your training job name and endpoint name, and will facilitate later on performing the auto scaling lab.
