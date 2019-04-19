@@ -47,7 +47,7 @@ SageMaker typically uses S3 as storage for data and model artifacts.  In this st
 
 #### High-Level Instructions
 
-Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your bucket's name must be globally unique across all regions and customers. We recommend using a name like `smp3workshop-firstname-lastname`. If you get an error that your bucket name already exists, try adding additional numbers or characters until you find an unused name.
+Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your bucket's name must be globally unique across all regions and customers. We recommend using a name like `smworkshop-firstname-lastname`. If you get an error that your bucket name already exists, try adding additional numbers or characters until you find an unused name.
 
 <details>
 <summary><strong>Step-by-step instructions (expand for details)</strong></summary><p>
@@ -76,7 +76,7 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 ![Notebook Instances](./images/new_instance.png)
 
-4. Type [First Name]-[Last Name]-workshop into the **Notebook instance name** text box, and select ml.t3.medium for the **Notebook instance type**.
+4. Type [First Name]-[Last Name]-workshop into the **Notebook instance name** text box, and select `ml.c5.xlarge` for the **Notebook instance type**.
 
 
 ![Create Notebook Instance](./images/create-notebook1.png)
@@ -87,9 +87,13 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 6. Enter **10** for the **Volume Size In GB - optional** instead of the default 5.
 
-7. You can expand the "Tags" section and add tags here if required.
+7. Instructions for the labs, and some of the Jupyter notebooks for the labs are available in a public  GitHub repo. Expand the `Git repositories` section, choose `Clone a public Git repository to this notebook instance only`. Then for the `Git repository URL`, specify the following: `https://github.com/markproy/sagemaker-workshop.git`.
 
-8. Click **Create notebook instance**.  This will take several minutes to complete.
+![Attach a GitHub repository](./images/git.png)
+
+8. You can expand the `Tags` section and add tags here if required.
+
+9. Click **Create notebook instance**.  This will take several minutes to complete.
 
 ### 3. Accessing the Notebook Instance
 
@@ -103,17 +107,13 @@ Use the console or AWS CLI to create an Amazon S3 bucket. Keep in mind that your
 
 ### 4. Access workshop content
 
-1. Open a new terminal window from your notebook instance. From the `Files` tab in your notebook instance, click on `New` / `Terminal`.
+1. For some of the labs, you will use the **SageMaker Examples** tab and locate a lab notebook in one of several groups of notebooks.
 
-2. From the terminal window, clone the workshop repository using the following command: `git clone https://github.com/markproy/sagemaker-workshop.git`
+2. Click on the **Use** button next to the notebook (e.g., DeepAR-Electricity.ipynb) to download the lab.
 
-3. For some of the labs, you will use the **SageMaker Examples** tab and locate a lab notebook in one of several groups of notebooks.
+3. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
 
-4. Click on the **Use** button next to the notebook (e.g., DeepAR-Electricity.ipynb) to download the lab.
-
-5. Click on the **Files** tab and open the new folder created. Click on the jupyter notebook (e.g., DeepAR-Electricity.ipynb) to start the lab.
-
-6. Follow the instructions in the notebook to complete the lab.
+4. Follow the instructions in the notebook to complete the lab.
 
 
 
