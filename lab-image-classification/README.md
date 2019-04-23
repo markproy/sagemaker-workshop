@@ -11,9 +11,8 @@ as `ml.p3.2xlarge`. Confirm with your workshop host that your account limits hav
 called **Introduction to Amazon Algorithms**. Find the line called **Image-classification-fulltraining-highlevel** and
 click **Use**.
 
-2. Click on the **Files** tab and open the new folder created. Click on the Jupyter notebook called
-**Image-classification-fulltraining-highlevel.ipynb** to start the lab.
+2. When prompted, click **Create Copy**. SageMaker then opens a copy of the sample notebook. Follow the detailed instructions in the notebook.
 
-3. Navigate to the notebook and follow the documentation provided in the sample notebook. For better results,  
+3. Follow the documentation provided in the sample notebook. For better results,  
 use transfer learning by changing the following hyperparameter: `use_pretrained_model=1`. Also, to reduce training time,
 only save checkpoints at the end of the training job: `checkpoint_frequency=5`.
