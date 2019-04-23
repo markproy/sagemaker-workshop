@@ -1,6 +1,6 @@
 # Use SageMaker inference pipelines
 
-In this lab, you will take advantage of Amazon SageMaker inference pipelines.
+In this lab, you will take advantage of Amazon SageMaker [inference pipelines](https://docs.aws.amazon.com/sagemaker/latest/dg/inference-pipelines.html). Here is a blog post that provides a good [overview](https://aws.amazon.com/blogs/machine-learning/ensure-consistency-in-data-processing-code-between-training-and-inference-in-amazon-sagemaker).
 
 This makes it easy to build and deploy feature preprocessing pipelines with a suite of feature transformers available in the new SparkML and scikit-learn containers in Amazon SageMaker. You can write your data processing code once and reuse it for training and inference which provides consistency in your machine learning workflows and easier management of your models. You can deploy upto five steps in your inference pipeline and they all execute on the same instance so there is minimal latency impact. The same inference pipeline can be used for real-time and batch inferences.
 

@@ -1,5 +1,5 @@
 # Amazon SageMaker Workshop
-This workshop provides a set of labs designed ti give you hands-on experience building, training, and deploying machine
+This workshop provides a set of labs designed to give you hands-on experience building, training, and deploying machine
 learning models using Amazon SageMaker. The target audience includes data scientists, machine learning engineers, solutions architects, and software developers.
 
 The workshop can be used in self-paced fashion, or delivered by a solutions architect in a 1-day or 2-day format.
