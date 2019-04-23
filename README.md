@@ -17,3 +17,4 @@ The "setup lab" is provided for those that have never created their own SageMake
 - perform [**A/B testing**](lab-ab-testing/README.md) when deploying a new version of an existing hosted model
 - use [**auto-scaling**](lab-auto-scale/README.md) to improve scalability of an endpoint hosted by Amazon SageMaker
 - [**bring your own Docker container**](lab-bring-your-own-container/README.md) to Amazon SageMaker
+- [**use inference pipelines**](lab-inference-pipelines/README.md)
