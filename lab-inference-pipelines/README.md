@@ -1,6 +1,8 @@
 # Use SageMaker inference pipelines
 
-In this lab, you will take advantage of Amazon SageMaker inference pipelines. Many real world use cases require a more complicated set of steps including pre-processing and post-processing that should ideally be shared across training and prediction. SageMaker inference pipelines provides a mechanism for exactly this purpose.
+In this lab, you will take advantage of Amazon SageMaker inference pipelines.
+
+This makes it easy to build and deploy feature preprocessing pipelines with a suite of feature transformers available in the new SparkML and scikit-learn containers in Amazon SageMaker. You can write your data processing code once and reuse it for training and inference which provides consistency in your machine learning workflows and easier management of your models. You can deploy upto five steps in your inference pipeline and they all execute on the same instance so there is minimal latency impact. The same inference pipeline can be used for real-time and batch inferences.
 
 The following SageMaker examples demonstrate the use of inference pipelines:
 
