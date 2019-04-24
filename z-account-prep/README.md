@@ -38,3 +38,13 @@ CreateEndpoint, DeleteEndpoint, ListEndpointConfigurations, ListEndpoints
 - **Burst** = number of users
 
 For a sample trouble ticket, see `https://tt.amazon.com/0188831009`.
+
+## SageMaker initial execution role
+
+To avoid confusion and bumping into other permission challenges, it can be helpful to establish the first SageMaker IAM execution role for the account before the workshop. To do so:
+
+- Sign in to AWS in the account as an admin user.
+- Begin to create the first notebook instance in the account.
+- When prompted for an execution role, choose to create a brand new role.
+- Choose to allow the notebook to have access to `Any S3 bucket`.
+- This avoids having to use `sagemaker` in the bucket name. This also avoids the users running into an `access denied` error when uploading data.
