@@ -51,4 +51,4 @@ To avoid confusion and bumping into other permission challenges, it can be helpf
 
 ## Account creation
 
-The account should be created with a group (e.g., "attendees")  containing multiple users (e.g., "user01" through "user25" for a projected 20-person workshop). They will need SageMakerFullAccess permissions, and an admin user should be provided for the workshop leader.
+The account should be created with a group (e.g., "attendees")  containing multiple users (e.g., "user01" through "user25" for a projected 20-person workshop). Users will need both console and programmatic access. They will need SageMakerFullAccess and S3FullAccess permissions, and an admin user should be provided for the workshop leader.
