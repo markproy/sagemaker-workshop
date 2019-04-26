@@ -17,7 +17,7 @@ If you are provided with AWS credit for this workshop, use this [link](https://c
 
 ### AWS Region
 
-SageMaker is not available in all AWS Regions at this time.  Accordingly, we recommend running this workshop in one of the supported AWS Regions such as N. Virginia, Oregon, Ohio.
+SageMaker is not available in all AWS Regions at this time.  Accordingly, we recommend running this workshop in one of the supported AWS Regions such as N. Virginia, Oregon, Ohio. Please confirm whether there is a recommended region for your workshop by consulting your workshop leader.
 
 **Once you've chosen a region, you should create all of the resources for this workshop there, including a new Amazon S3 bucket and a new SageMaker notebook instance. Make sure you select your region from the dropdown in the upper right corner of the AWS Console before getting started.**
 
