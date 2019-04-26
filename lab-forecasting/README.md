@@ -14,4 +14,6 @@ At the next level down in the stack, Amazon SageMaker provides a built-in algori
 
 In this lab, you will exercise the DeepAR built-in algorithm on time series electricity data. We will use a SageMaker-provided sample notebook called `deepar_synthetic`, which you can find in the Introduction to Amazon Algorithms section. Use a copy of that sample, and follow its detailed instructions.
 
+Be sure to try out the interactive display of the forecasts predicted by DeepAR for a given customer on a given forecast day. The notebook first demonstrates base forecasting capability, and then moves on to show how it can handle missing data and special days (e.g., promotion days in a retail setting).
+
 NOTE: the notebook defaults to using `ml.c4.2xlarge`. If you hit an account limit when training, you should switch to `ml.c5.xlarge` instead.
