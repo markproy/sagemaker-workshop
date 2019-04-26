@@ -10,7 +10,7 @@ The default account limits related to SageMaker are typically set to support min
 
 1. **Notebooks**. Set `ml.c5.xlarge` to number of users. Set `ml.t3.medium` to number of users. Set `total_count` to number of users times 2. Set `total_volume_size_in_gb` to 100,000.
 
-2. **Training**. Set `instance_per_job_max` to 20. Set `ml.c5.xlarge` to number of users times 3. Set `ml.m4.xlarge` to number of users times 3. Set `ml.p2.xlarge` and `ml.p3.xlarge` to number of users (required if you would like to do any computer vision labs with SageMaker built-in algorithms). Set `total_instance_count` to number of users times 3.
+2. **Training**. Set `instance_per_job_max` to 20. Set `ml.c5.xlarge` to number of users times 3. Set `ml.m4.xlarge` to number of users times 3. Set `ml.p2.xlarge` and `ml.p3.2xlarge` to number of users (required if you would like to do any computer vision labs with SageMaker built-in algorithms). Set `total_instance_count` to number of users times 3.
 
 3. **Hosting**. Set `instance_per_endpoint_max` to 4. Set `ml.c5.xlarge` to number of users. Set `ml.eia1.medium` to number of users. Set `ml.m4.xlarge` to number of users. Set `total_instance_count` to number of users times 3.
 
@@ -51,4 +51,6 @@ To avoid confusion and bumping into other permission challenges, it can be helpf
 
 ## Account creation
 
-The account should be created with a group (e.g., "attendees")  containing multiple users (e.g., "user01" through "user25" for a projected 20-person workshop). Users will need both console and programmatic access. They will need SageMakerFullAccess and S3FullAccess permissions, and an admin user should be provided for the workshop leader.
+The account should be created with a group (e.g., "attendees")  containing multiple users (e.g., "user01" through "user25" for a projected 20-person workshop). Users will need both console and programmatic access. They will need SageMakerFullAccess and S3FullAccess permissions.
+
+The users should not be set up with admin permissions. Instead, a separate admin user should be provided for the workshop leader. That enables the workshop leader to solve unexpected issues, while not giving the attendees excess privileges that could facilitate them making damaging mistakes.
