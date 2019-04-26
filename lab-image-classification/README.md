@@ -11,8 +11,7 @@ as `ml.p3.2xlarge`. Confirm with your workshop host that your account limits hav
 called **Introduction to Amazon Algorithms**. Find the line called **Image-classification-fulltraining-highlevel** and
 click **Use**.
 
-2. When prompted, click **Create Copy**. SageMaker then opens a copy of the sample notebook. Follow the detailed instructions in the notebook.
+2. When prompted, click **Create Copy**. SageMaker then opens a copy of the sample notebook.
 
-3. Follow the documentation provided in the sample notebook. For better results,  
-use transfer learning by changing the following hyperparameter: `use_pretrained_model=1`. Also, to reduce training time,
-only save checkpoints at the end of the training job: `checkpoint_frequency=5`.
+3. Follow the detailed instructions provided in the sample notebook. For best results,  
+use transfer learning by changing the following hyperparameter: `use_pretrained_model=1`. Also, to reduce training time, only save checkpoints at the end of the training job: `checkpoint_frequency=5`.
