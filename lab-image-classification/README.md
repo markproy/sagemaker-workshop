@@ -1,7 +1,9 @@
 # Use built-in Image Classification algorithm
 
 In this lab, you will train and use a model to do image classification,
-taking advantage of the built-in Image Classification algorithm in Amazon SageMaker. The use case is for detecting
+taking advantage of the [built-in Image Classification algorithm](https://docs.aws.amazon.com/sagemaker/latest/dg/image-classification.html) in Amazon SageMaker. Here is a [blog post](https://aws.amazon.com/blogs/machine-learning/classify-your-own-images-using-amazon-sagemaker/) walking you through creating an image classifier using this algorithm.
+
+The use case in the sample notebook for our lab is for detecting
 objects from a set of 256 types.
 
 This notebook requires your account to have access to a GPU instance type such
