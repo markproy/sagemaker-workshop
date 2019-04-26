@@ -15,3 +15,5 @@ click **Use**.
 
 3. Follow the detailed instructions provided in the sample notebook. For best results,  
 use transfer learning by changing the following hyperparameter: `use_pretrained_model=1`. Also, to reduce training time, only save checkpoints at the end of the training job: `checkpoint_frequency=5`.
+
+4. As with all of the sample notebooks, be sure to delete the endpoint when you are done.
