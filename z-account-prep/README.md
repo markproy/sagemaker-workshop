@@ -2,7 +2,7 @@
 
 Before hosting this workshop for a customer, an account needs to be prepared. If the customer is new to AWS, or is not already using Amazon SageMaker, we often create a new AWS account on their behalf. When attendees already have accounts with access to SageMaker, we can instead ensure the proper account limits are in place. When in doubt, we provide the account.
 
-Once the account is identified or created, account limits need to be confirmed or raised to support the workshop.
+Once the account is identified or created, account limits need to be confirmed or raised to support the workshop. By default, we use `us-east-1` as the region.
 
 ## Account limits
 
@@ -37,7 +37,7 @@ CreateEndpoint, DeleteEndpoint, ListEndpointConfigurations, ListEndpoints
 
 - **Burst** = number of users
 
-An internal trouble ticket should be opened to AWS /  SageMaker / Service Limit increase. For a sample trouble ticket, see `https://tt.amazon.com/0188831009`.
+An internal trouble ticket should be opened to AWS /  SageMaker / Service Limit increase. It should specify the account, the region, and the above burst and rate limits. Specify a justification such as `We are hosting a SageMaker workshop for up to NN customers from DATE1 to DATE2. All users will be working from the same account.`
 
 ## SageMaker initial execution role
 
