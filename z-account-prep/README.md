@@ -37,7 +37,7 @@ CreateEndpoint, DeleteEndpoint, ListEndpointConfigurations, ListEndpoints
 
 - **Burst** = number of users
 
-An internal trouble ticket should be opened to AWS /  SageMaker / Service Limit increase. It should specify the account, the region, and the above burst and rate limits. Specify a justification such as `We are hosting a SageMaker workshop for up to NN customers from DATE1 to DATE2. All users will be working from the same account.`
+An internal trouble ticket should be opened to `AWS /  SageMaker / Service Limit increase`. It should specify the account, the region, and the above burst and rate limits. Specify a justification such as `We are hosting a SageMaker workshop for up to NN customers from DATE1 to DATE2. All users will be working from the same account.`
 
 ## SageMaker initial execution role
 
