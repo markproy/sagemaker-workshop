@@ -7,8 +7,7 @@ customer churn for a mobile phone company.
 Here are some notes for completing the lab:
 
 1. Inside of your notebook instance, navigate to the **SageMaker Examples** tab. Expand the folder
-called **Introduction to Applying Machine Learning**. Find the line called **xgboost_customer_churn** and
-click **Use**.
+called **Introduction to Applying Machine Learning**. Find the line called **xgboost_customer_churn**,and click **Use** and **Create copy**.
 
 2. Click on the **Files** tab and open the new folder created. Click on the Jupyter notebook to start the lab.
 
