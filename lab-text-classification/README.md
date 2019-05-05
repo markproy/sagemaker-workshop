@@ -13,7 +13,7 @@ click **Use** and **Create copy**.
 
 3. Navigate to the notebook and follow the documentation provided in the sample notebook.
 
-4. You should add your initials to the `prefix` in the first cell (e.g., `mpr_blazingtext/supervised` instead of just `blazingtext/supervised`). This will make it easier to find your files, if you will be sharing the same S3 bucket with other workshop users.
+4. You should add your initials to the `prefix` in the first cell (e.g., `mpr-blazingtext/supervised` instead of just `blazingtext/supervised`). This will make it easier to find your files, if you will be sharing the same S3 bucket with other workshop users.
 
 5. Since we have multiple users in the same account, we want to make it easier to find your training jobs and endpoints as well. To faciliate this, locate the cell that creates the `Estimator`, and add a `base_job_name` parameter to the call. It should look like the following, except you would replace `mpr` with **your** initials or user name. Note that you will also need to specify `ml.c5.xlarge` as the training instance type to align with the account limits that were preset for the workshop.
 
