@@ -11,15 +11,14 @@
 #     express or implied. See the License for the specific language governing
 #     permissions and limitations under the License.
 
-import os
-import argparse
-from os import listdir
-from os.path import isfile, join
-
 import tensorflow as tf
 from tensorflow.keras import models, layers
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 
+import os
+from os import listdir
+import argparse
+from os.path import isfile, join
 import numpy as np
 import logging
 import json
@@ -30,30 +29,33 @@ import datetime
 logging.getLogger().setLevel(logging.INFO)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-NUM_FEATURES = 7499 #7499 
-NUM_DATA_BATCHES = 5
+NUM_FEATURES = 50 #50 #50 #50 #50 #50 #50 #7
 INPUT_TENSOR_NAME = 'inputs_input'  # needs to match the name of the first layer + "_input"
 
 def list_files_in_dir(which_dir):
-    logging.info('\nState of directory tree {}:'.format(which_dir))
-    for filename in glob.iglob(which_dir + '**/*', recursive=True):
-        logging.info(filename)
+    logging.info('\nContents of {}:'.format(which_dir))
+    files = glob.glob(which_dir + '/**', recursive=True)
+    for f in files:
+        logging.info(f)
 
-class PipeDebugCallback(tf.keras.callbacks.Callback):
+def _time():
+    return datetime.datetime.now().time()
+
+class PipeDebugCallback(tf.keras.callbacks.Callback): # is not called for some reason
   def on_train_batch_begin(self, batch, logs=None):
-    logging.info('Training: batch {} BEGINS at {}'.format(batch, datetime.datetime.now().time()))
+    logging.info('Training: batch {} BEGINS at {}'.format(batch, _time()))
     list_files_in_dir('/opt/ml/input/data')
 
   def on_train_batch_end(self, batch, logs=None):
-    logging.info('Training: batch {} ENDS at {}'.format(batch, datetime.datetime.now().time()))
+    logging.info('Training: batch {} ENDS at {}'.format(batch, _time()))
     list_files_in_dir('/opt/ml/input/data')
 
   def on_test_batch_begin(self, batch, logs=None):
-    logging.info('Evaluating: batch {} BEGINS at {}'.format(batch, datetime.datetime.now().time()))
+    logging.info('Evaluating: batch {} BEGINS at {}'.format(batch, _time()))
     list_files_in_dir('/opt/ml/input/data')
 
   def on_test_batch_end(self, batch, logs=None):
-    logging.info('Evaluating: batch {} ENDS at {}'.format(batch, datetime.datetime.now().time()))
+    logging.info('Evaluating: batch {} ENDS at {}'.format(batch, _time()))
     list_files_in_dir('/opt/ml/input/data')
     
 def get_filenames(channel_name, channel):
@@ -64,16 +66,6 @@ def get_filenames(channel_name, channel):
         if mode == 'File':
             for f in listdir(channel):
                 fnames.append(os.path.join(channel, f))
-#        else:
-            # in Pipe mode, the files are supposedly in channel_epochnum
-            # all seems to work, however, found nothing in when called at start:
-            #     /opt/ml/input/data/train/train, /opt/ml/input/data/train/train_0,
-            #     /opt/ml/input/data/train_0
-        
-            #channel_epoch = os.path.join(channel, channel_name + '_0')
-            #for f in listdir(channel_epoch):
-            #    fnames.append(os.path.join(channel_epoch, f))
-            
         logging.info('returning filenames: {}'.format(fnames))
         return [fnames]
     else:
@@ -112,8 +104,9 @@ def _input(epochs, batch_size, channel, channel_name):
         mode: Standard names for model modes (tf.estimators.ModeKeys).
         batch_size: The number of samples per batch of input requested.
     """
-    filenames = get_filenames(channel_name, channel)
     logging.info("Running {} in {} mode for {} epochs".format(channel_name, mode, epochs))
+
+    filenames = get_filenames(channel_name, channel)
 
     # Repeat infinitely.
     if mode == 'Pipe':
@@ -129,7 +122,7 @@ def _input(epochs, batch_size, channel, channel_name):
     dataset = dataset.map(_dataset_parser, num_parallel_calls=10)
     ## TF Dataset question: why does _dataset_parser only get called once per channel??
 
-    # Potentially shuffle records.
+    # Shuffle training records.
     if channel_name == 'train':
         # Ensure that the capacity is sufficiently large to provide good random
         # shuffling.
@@ -143,7 +136,6 @@ def _input(epochs, batch_size, channel, channel_name):
     features_batch, label_batch = iterator.get_next()
     
     with tf.Session() as sess:
-#        logging.info('features_batch: {}'.format(features_batch.values))
         logging.info('type of features_batch: {}, type of values: {}'.format(type(features_batch), 
                                                          type(features_batch)))
         logging.info('label_batch: {}'.format(label_batch))
@@ -152,16 +144,19 @@ def _input(epochs, batch_size, channel, channel_name):
     return {INPUT_TENSOR_NAME: features_batch}, label_batch
 
 def save_model(model, output):
-    logging.info('Saving model, here are the contents:')
+    logging.info('Saving model...')
     # create a TensorFlow SavedModel for deployment to a SageMaker endpoint with TensorFlow Serving
     tf.contrib.saved_model.save_keras_model(model, output)
+    logging.info('Model successfully saved at: {}, with the following content:'.format(output))
     list_files_in_dir(output)
-    logging.info('Model successfully saved at: {}'.format(output))
     return
 
 
 if __name__=='__main__':
+    logging.info('Entering training script at {}'.format(_time()))
+    
     parser = argparse.ArgumentParser()
+
     # hyperparameters sent by the client are passed as command-line arguments to the script.
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--num_train_samples', type=int)
@@ -174,17 +169,19 @@ if __name__=='__main__':
     parser.add_argument('--val', type=str, default=os.environ.get('SM_CHANNEL_VAL'))
     parser.add_argument('--data-config', type=json.loads, 
                         default=os.environ.get('SM_INPUT_DATA_CONFIG'))
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ.get('SM_HOSTS')))
+    parser.add_argument('--current-host', type=str, default=os.environ.get('SM_CURRENT_HOST'))
 
     args, _ = parser.parse_known_args()
     logging.info('args: {}'.format(args))
     epochs = args.epochs
     
-    logging.info('getting data')
+    logging.info('Getting data')
     train_dataset = train_input_fn()
     test_dataset  = test_input_fn()
     val_dataset   = val_input_fn()
 
-    logging.info("configuring model")
+    logging.info('Configuring model')
     
     network = models.Sequential()
     network.add(layers.Dense(32, activation='relu', input_shape=(NUM_FEATURES,), name='inputs'))
@@ -192,28 +189,52 @@ if __name__=='__main__':
     network.add(layers.Dense(1, activation='sigmoid'))
     network.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
 
-    fitCallbacks = [ModelCheckpoint(os.environ.get('SM_OUTPUT_DATA_DIR') + '/checkpoint-{epoch}.h5')]
-        #, PipeDebugCallback()]
-    logging.info('Starting training')
+    # NOTE: Ordinarily, you do not need to specify 'steps_per_epoch' and 'validation_steps'.
+    # However, when passing in a tf Dataset (like PipeModeDataset) to the fit method, these
+    # parameters are required. Else you will get the following error:
+    #
+    #    ValueError: When using data tensors as input to a model, you should specify
+    #    the `steps_per_epoch` argument.
+    #
+    
+    # NOTE: We leverage the number of hosts (driven by instance_count used when launching
+    # the training job) when determining the right number of steps for the training. On 
+    # single node training, it is sufficient to use the number of steps equivalent to 
+    # samples divided by batch size. This ensures the full dataset is used in each epoch.
+    # When performing distributed training, the steps can be reduced by a factor of the number
+    # of training instances. So for a 2-node job, 1000 steps can be reduced to 500 steps on each host.
+    #
 
+    logging.info('\nStarting training at {}'.format(_time()))
+
+    num_hosts = len(os.environ.get('SM_HOSTS'))
+    train_steps = args.num_train_samples // args.batch_size // num_hosts
+    val_steps   = args.num_val_samples   // args.batch_size // num_hosts
+    test_steps  = args.num_test_samples  // args.batch_size // num_hosts
+    print('Train Steps: {}, Val Steps: {}, Test Steps: {}'.format(train_steps, val_steps, test_steps))
+    
+    fitCallbacks = [ModelCheckpoint(os.environ.get('SM_OUTPUT_DATA_DIR') + '/checkpoint-{epoch}.h5'),
+                    PipeDebugCallback()]
     network.fit(x=train_dataset[0], y=train_dataset[1],
-                steps_per_epoch=(args.num_train_samples // args.batch_size),
-                epochs=args.epochs, 
-                validation_data=val_dataset,
-                validation_steps=(args.num_val_samples // args.batch_size),
+                steps_per_epoch=train_steps, epochs=args.epochs, 
+                validation_data=val_dataset, validation_steps=val_steps,
                 callbacks=fitCallbacks)
 
-    logging.info('\nTraining completed.')
+    logging.info('\nTraining completed at {}'.format(_time()))
+
     logging.info('\nEvaluating against test set...')
-
     score = network.evaluate(test_dataset[0], test_dataset[1], 
-                             steps=args.num_test_samples // args.batch_size,
+                             steps=test_steps,
                              verbose=1)
-#    callbacks=[PipeDebugCallback()])
 
-    logging.info('Test loss:{}'.format(score[0]))
+    logging.info('    Test loss:{}'.format(score[0]))
     logging.info('Test accuracy:{}'.format(score[1]))
 
-    logging.info('\nSaving model')
-    save_model(network, os.environ.get('SM_MODEL_DIR'))
-    logging.info('\nExiting training script.')
+    # Save the model if we are executing on the master host
+    if args.current_host == args.hosts[0]:
+        logging.info('Saving model, since we are master host')
+        save_model(network, os.environ.get('SM_MODEL_DIR'))
+    else:
+        logging.info('NOT saving model, will leave that up to master host')
+
+    logging.info('\nExiting training script at {}'.format(_time()))
