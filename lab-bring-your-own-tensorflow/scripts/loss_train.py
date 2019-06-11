@@ -34,6 +34,8 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     # hyperparameters sent by the client are passed as command-line arguments to the script.
     parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--dense1_dim', type=int, default=16)
+    parser.add_argument('--dense1_activation', type=str, default='relu')
     # input data and model directories
     parser.add_argument('--model_dir', type=str)
     parser.add_argument('--train', type=str, default=os.environ.get('SM_CHANNEL_TRAIN'))
@@ -43,11 +45,14 @@ if __name__=='__main__':
     args, _ = parser.parse_known_args()
     print('args: {}'.format(args))
     epochs = args.epochs
+    dense1_dim = args.dense1_dim
+    dense1_activation = args.dense1_activation
     
     X_train, X_test, X_val, y_train, y_test, y_val = prep_data()
     
     network = models.Sequential()
-    network.add(layers.Dense(16, activation='relu', input_shape=(13,)))
+    network.add(layers.Dense(dense1_dim, activation=dense1_activation, 
+                             input_shape=(13,)))
     network.add(layers.Dense(16, activation='relu'))
     network.add(layers.Dense(1, activation='sigmoid'))
     network.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
