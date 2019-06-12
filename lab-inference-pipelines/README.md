@@ -16,4 +16,3 @@ The following SageMaker examples demonstrate the use of inference pipelines:
 
 To use one of these examples, inside of your notebook instance, navigate to the **SageMaker Examples** tab. Expand the specified folder. Find the named example and click **Use**.  When prompted, click **Create Copy**. SageMaker then opens a copy of the sample notebook. Follow the detailed instructions in the notebook.
 
-called **Introduction to Amazon Algorithms**.
