@@ -150,6 +150,9 @@ def main(args):
     print('Model has been fit.')
 
     print('Saving model to /opt/ml/model...')
+    # Note that this method of saving does produce a warning about not containing the train and evaluate graphs.
+    # The resulting saved model works fine for inference. It will simply not support incremental training. If that
+    # is needed, one can use model checkpoints and save those.
     tf.contrib.saved_model.save_keras_model(model, '/opt/ml/model')
     print('...DONE saving model!')
 
