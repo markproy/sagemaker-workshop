@@ -149,16 +149,8 @@ def main(args):
                                shuffle=True)
     print('Model has been fit.')
 
-    print('Saving model...')
-    model_version = '1'
-    export_dir = '/opt/ml/model/export/Servo/' + model_version    
-    print('    Export dir is: {}'.format(export_dir))
-    tf.saved_model.simple_save(
-            tf.keras.backend.get_session(),
-            export_dir,
-            inputs={'input_1': model.input},
-            outputs={'output': model.output})
-
+    print('Saving model to /opt/ml/model...')
+    tf.contrib.saved_model.save_keras_model(model, '/opt/ml/model')
     print('...DONE saving model!')
 
     print('\nExiting training script.\n')
