@@ -91,30 +91,8 @@ def create_data_generators():
                                                   target_size=(HEIGHT, WIDTH), 
                                                   batch_size=args.batch_size)
     return train_gen, test_gen, val_gen
-
-def save_model(m, model_dir):
-    m_i = m.input
-    m_o = m.output
-    print('inputs: {}'.format(m_i))
-    print('output: {}'.format(m_o))
-    print('model_dir: {}'.format(model_dir))
-    
-    model_version = '1'
-    export_dir = model_dir + '/' + 'export/Servo/' + model_version    
-    
-#    with K.get_session() as sess:
-#        tf.saved_model.simple_save(
-#            sess,
-#            export_dir,
-#            inputs={'input_1': m.input},
-#            outputs={'output': m.output})
     
 def main(args):
-    # https://github.com/tensorflow/tensorflow/issues/13844
-#    timeout = 360 * 1000 # 3 minutes worth of milliseconds
-#    print('Changing S3 timeout env var to : {}'.format(timeout))
-#    os.environ['S3_REQUEST_TIMEOUT_MSEC'] = str(timeout)
-    
     # Create data generators for feeding training and evaluation based on data provided to us
     # by the SageMaker TensorFlow container
     train_gen, test_gen, val_gen = create_data_generators()
@@ -172,22 +150,14 @@ def main(args):
     print('Model has been fit.')
 
     print('Saving model...')
-#    save_model(model, os.environ.get('SM_MODEL_DIR'))
     model_version = '1'
-    model_dir = os.environ.get('SM_MODEL_DIR') #args.model_dir
     export_dir = '/opt/ml/model/export/Servo/' + model_version    
     print('    Export dir is: {}'.format(export_dir))
-    
-#    with tf.keras.backend.get_session() as sess:
-
     tf.saved_model.simple_save(
-#            sess,
             tf.keras.backend.get_session(),
             export_dir,
             inputs={'input_1': model.input},
             outputs={'output': model.output})
-
-#    tf.contrib.saved_model.save_keras_model(model, '/opt/ml/model')
 
     print('...DONE saving model!')
 
