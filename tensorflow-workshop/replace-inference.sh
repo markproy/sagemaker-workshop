@@ -4,11 +4,16 @@ mkdir tmp-fix
 cd tmp-fix
 aws s3 cp $1 .
 gunzip model.tar.gz
+echo Original contents:
 tar xvf model.tar
 rm model.tar
-cp ../code/* code/
+echo Updating inference.py and requirements.txt with your notebook copy
+cp ../code/inference.py code/
+cp ../code/requirements.txt code/
+echo Updated contents:
 tar cvf model.tar *
 gzip model.tar
 aws s3 cp model.tar.gz $1
 cd ..
 rm -rf tmp-fix
+echo Done.

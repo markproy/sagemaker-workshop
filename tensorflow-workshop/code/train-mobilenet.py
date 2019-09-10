@@ -36,17 +36,6 @@ import glob
 HEIGHT = 224
 WIDTH  = 224
 
-# Need to copy these files to the code directory, else the SageMaker endpoint will not use them.
-print('Copying inference source files...')
-
-if not os.path.exists('/opt/ml/model/code'):
-    os.system('mkdir /opt/ml/model/code')
-os.system('cp inference.py /opt/ml/model/code')
-os.system('cp requirements.txt /opt/ml/model/code')
-
-print('Files after copy:')
-print(glob.glob('/opt/ml/model/code/*'))
-
 def build_finetune_model(base_model, dropout, fc_layers, num_classes):
     # Freeze all base layers
     for layer in base_model.layers:
@@ -153,8 +142,19 @@ def main(args):
     # Note that this method of saving does produce a warning about not containing the train and evaluate graphs.
     # The resulting saved model works fine for inference. It will simply not support incremental training. If that
     # is needed, one can use model checkpoints and save those.
-    tf.contrib.saved_model.save_keras_model(model, '/opt/ml/model')
+    print('Model directory files BEFORE save: {}'.format(glob.glob('/opt/ml/model/*/*')))
+    tf.contrib.saved_model.save_keras_model(model, '/opt/ml/model/1')
+    print('Model directory files AFTER save: {}'.format(glob.glob('/opt/ml/model/*/*')))
     print('...DONE saving model!')
+
+    # Need to copy these files to the code directory, else the SageMaker endpoint will not use them.
+    print('Copying inference source files...')
+
+    if not os.path.exists('/opt/ml/model/code'):
+        os.system('mkdir /opt/ml/model/code')
+    os.system('cp inference.py /opt/ml/model/code')
+    os.system('cp requirements.txt /opt/ml/model/code')
+    print('Files after copying custom inference handler files: {}'.format(glob.glob('/opt/ml/model/code/*')))
 
     print('\nExiting training script.\n')
     
