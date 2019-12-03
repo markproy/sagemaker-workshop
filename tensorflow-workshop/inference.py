@@ -22,11 +22,6 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 from numpy import argmax
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-
 HEIGHT = 224
 WIDTH  = 224
 
@@ -36,7 +31,6 @@ Context = namedtuple('Context',
 
 def input_handler(data, context):
 
-    logging.info('in input_handler')
     if context.request_content_type == 'application/x-image':
 
         stream = io.BytesIO(data.read())
