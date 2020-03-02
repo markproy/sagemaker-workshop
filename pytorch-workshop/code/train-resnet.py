@@ -191,15 +191,11 @@ def main(args):
                 
     print('\nCompleted training.\n')
 
-#    curr_host = os.getenv('SM_CURRENT_HOST', 'algo-1')
-#    if 'algo-1' in curr_host:
-
     if host_rank == 0:
         model_dir = args.model_dir
         path = f'{model_dir}/model.pth'
         print(f'Saving model to {path}...')
         torch.save(model.state_dict(), path) # model.cpu()
-#        torch.save(model, path)
         print('Model directory files AFTER save: {}'.format(glob.glob(f'{model_dir}/*')))
 
     print('\nExiting training script.')
@@ -242,11 +238,6 @@ def model_fn(model_dir):
     print('In model_fn...')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'===device is: {device}')
-
-#        model.load_state_dict(torch.load(f))
-
-#    model = torch.load(os.path.join(model_dir, 'model.pth'), 
-#                       map_location=torch.device(device))
 
     model     = models.resnet50(pretrained=True)
     fc_inputs = model.fc.in_features
