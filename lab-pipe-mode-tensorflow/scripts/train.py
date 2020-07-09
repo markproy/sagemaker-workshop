@@ -27,9 +27,9 @@ import datetime
 
 
 logging.getLogger().setLevel(logging.INFO)
-tf.logging.set_verbosity(tf.logging.ERROR)
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-NUM_FEATURES = 50 
+NUM_FEATURES = 5000 #5000 #50 
 INPUT_TENSOR_NAME = 'inputs_input'  # needs to match the name of the first layer + "_input"
 
 def list_files_in_dir(which_dir):
@@ -72,11 +72,18 @@ def val_input_fn():
 
 def _dataset_parser(value):
     """Parse a record from 'value'."""
-    feature_description = {
-        'features': tf.VarLenFeature(tf.float32),
-        'label'   : tf.FixedLenFeature([], tf.int64, default_value=0)
-    }
-    example = tf.parse_single_example(value, feature_description)
+    if tf.version.VERSION[0] == '2':
+        feature_description = {
+            'features': tf.io.VarLenFeature(tf.float32),
+            'label'   : tf.io.FixedLenFeature([], tf.int64, default_value=0)
+        }
+        example = tf.io.parse_single_example(value, feature_description)
+    else:
+        feature_description = {
+            'features': tf.VarLenFeature(tf.float32),
+            'label'   : tf.FixedLenFeature([], tf.int64, default_value=0)
+        }
+        example = tf.parse_single_example(value, feature_description)
 
     label = tf.cast(example['label'], tf.int32)
     logging.info('parsed label: {}'.format(label))
@@ -109,7 +116,6 @@ def _input(epochs, batch_size, channel, channel_name):
 
     # Parse records.
     dataset = dataset.map(_dataset_parser, num_parallel_calls=10)
-    ## TF Dataset question: why does _dataset_parser only get called once per channel??
 
     # Shuffle training records.
     if channel_name == 'train':
@@ -121,23 +127,38 @@ def _input(epochs, batch_size, channel, channel_name):
     # Batch it up.
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    iterator = dataset.make_one_shot_iterator()
+    if tf.version.VERSION[0] == '2':
+        iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
+    else:
+        iterator = dataset.make_one_shot_iterator()
+        
     features_batch, label_batch = iterator.get_next()
     
-    with tf.Session() as sess:
-        logging.info('type of features_batch: {}, type of values: {}'.format(type(features_batch), 
-                                                         type(features_batch)))
-        logging.info('label_batch: {}'.format(label_batch))
-        logging.info('type of label_batch: {}'.format(type(label_batch)))
+    if tf.version.VERSION[0] == '2':
+        with tf.compat.v1.Session() as sess:
+            logging.info('type of features_batch: {}, type of values: {}'.format(type(features_batch), 
+                                                             type(features_batch)))
+            logging.info('label_batch: {}'.format(label_batch))
+            logging.info('type of label_batch: {}'.format(type(label_batch)))
+    else:
+        with tf.Session() as sess:
+            logging.info('type of features_batch: {}, type of values: {}'.format(type(features_batch), 
+                                                             type(features_batch)))
+            logging.info('label_batch: {}'.format(label_batch))
+            logging.info('type of label_batch: {}'.format(type(label_batch)))
 
     return {INPUT_TENSOR_NAME: features_batch}, label_batch
 
-def save_model(model, output):
+def save_model(model, model_dir):
     logging.info('Saving model...')
     # create a TensorFlow SavedModel for deployment to a SageMaker endpoint with TensorFlow Serving
-    tf.contrib.saved_model.save_keras_model(model, output)
-    logging.info('Model successfully saved at: {}, with the following content:'.format(output))
-    list_files_in_dir(output)
+    if tf.version.VERSION[0] == '2':
+        model.save(f'{model_dir}/1', save_format='tf')
+    else:
+        tf.contrib.saved_model.save_keras_model(model, f'{model_dir}/1')
+
+    logging.info('Model successfully saved at: {}, with the following content:'.format(model_dir))
+    list_files_in_dir(model_dir)
     return
 
 
@@ -223,6 +244,7 @@ if __name__=='__main__':
     logging.info('Test accuracy:{}'.format(score[1]))
 
     # Save the model if we are executing on the master host
+    logging.info(f'Current host: {args.current_host}')
     if args.current_host == args.hosts[0]:
         logging.info('Saving model, since we are master host')
         save_model(network, os.environ.get('SM_MODEL_DIR'))
