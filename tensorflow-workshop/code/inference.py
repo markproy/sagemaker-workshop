@@ -6,13 +6,42 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 
 import io
+import base64
 import json
 import numpy as np
+from numpy import argmax
 from collections import namedtuple
 from PIL import Image
+import time
+import requests
+
+# Imports for GRPC invoke on TFS
+import grpc
+from tensorflow.compat.v1 import make_tensor_proto
+from tensorflow_serving.apis import predict_pb2
+from tensorflow_serving.apis import prediction_service_pb2_grpc
+
+USE_GRPC = True
+MAX_GRPC_MESSAGE_LENGTH = 512 * 1024 * 1024
 
 HEIGHT = 224
 WIDTH  = 224
+
+# Restrict memory growth on GPU's
+physical_gpus = tf.config.experimental.list_physical_devices('GPU')
+if physical_gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in physical_gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(physical_gpus), 'Physical GPUs,', len(logical_gpus), 'Logical GPUs')
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
+else:
+    print('**** NO physical GPUs')
+
 
 num_inferences = 0
 print(f'num_inferences: {num_inferences}')
@@ -21,69 +50,82 @@ Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
                      'custom_attributes, request_content_type, accept_header')
 
-def input_handler(data, context):
+def handler(data, context):
 
     global num_inferences
     num_inferences += 1
     
-    print(f'\n*** in input_handler, inference #: {num_inferences}')
+    print(f'\n************ inference #: {num_inferences}')
     if context.request_content_type == 'application/x-image':
-
         stream = io.BytesIO(data.read())
-        img = Image.open(stream)
-        img = img.convert('RGB')
-        
-        # Retrieve the attributes of the image
-        fileFormat      = img.format       
-        imageMode       = img.mode        
-        imageSize       = img.size          # tuple of (width, height)
-        colorPalette    = img.palette       
-        
-        print(f'    File format: {fileFormat}')
-        print(f'    Image mode:  {imageMode}')
-        print(f'    Image size:  {imageSize}')
-        print(f'    Color pal:   {colorPalette}')
-        
-        print(f'    Keys from image.info dictionary:')
-        for key, value in img.info.items():
-            print(f'      {key}')
+        img = Image.open(stream).convert('RGB')
+        _print_image_metadata(img)
             
         img = img.resize((WIDTH, HEIGHT))
-        x = np.asarray(img)
-        curr_shape = x.shape
-        new_shape = (1,) + curr_shape
-        x = x.reshape(new_shape)
+        img_array = image.img_to_array(img) #, data_format = "channels_first")
+        # the image is now in an array of shape (224, 224, 3)
+        # need to expand it to (1, 224, 224, 3) as it's expecting a list
+        x = tf.expand_dims(img_array, axis=0)
         instance = preprocess_input(x)
-        del x, img
         print(f'    final image shape: {instance.shape}')
-        inst_json = json.dumps({"instances": instance.tolist()})
-        print(f'   returning from input_handler:\n')
-        
-        return inst_json
-
+        del x, img
     else:
         _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
 
-    return data
+    start_time = time.time()
+    
+    if USE_GRPC:
+        prediction = _predict_using_grpc(context, instance)
 
-def output_handler(data, context):
-    """Post-process TensorFlow Serving output before it is returned to the client.
+    else: # use TFS REST API
+        response = requests.post(context.rest_uri, data=inst_json)
+        if response.status_code != 200:
+            raise Exception(response.content.decode('utf-8'))
+        prediction = response.content
 
-    Args:
-        data (obj): the TensorFlow serving response
-        context (Context): an object containing request and configuration details
-
-    Returns:
-        (bytes, string): data to return to client, response content type
-    """
-    print('*** in output_handler')
-
-    if data.status_code != 200:
-        raise Exception(data.content.decode('utf-8'))
+    end_time   = time.time()
+    latency    = int((end_time - start_time) * 1000)
+    print(f'=== TFS invoke took: {latency} ms')
+    
     response_content_type = context.accept_header
-    prediction = data.content
     return prediction, response_content_type
-
 
 def _return_error(code, message):
     raise ValueError('Error: {}, {}'.format(str(code), message))
+
+def _predict_using_grpc(context, instance):
+    request = predict_pb2.PredictRequest()
+    request.model_spec.name = 'model'
+    request.model_spec.signature_name = 'serving_default'
+
+    request.inputs['input_1'].CopyFrom(make_tensor_proto(instance))
+    options = [
+        ('grpc.max_send_message_length', MAX_GRPC_MESSAGE_LENGTH),
+        ('grpc.max_receive_message_length', MAX_GRPC_MESSAGE_LENGTH)
+    ]
+    channel = grpc.insecure_channel(f'0.0.0.0:{context.grpc_port}', options=options)
+    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+    result_future = stub.Predict.future(request, 30)  # 5 seconds  
+    output_tensor_proto = result_future.result().outputs['output']
+    output_shape = [dim.size for dim in output_tensor_proto.tensor_shape.dim]
+    output_np = np.array(output_tensor_proto.float_val).reshape(output_shape)
+    predicted_class_idx = argmax(output_np) 
+    print(f'    Predicted class: {predicted_class_idx}')
+    prediction_json = {'predictions': output_np.tolist()}
+    return json.dumps(prediction_json)
+    
+def _print_image_metadata(img):
+    # Retrieve the attributes of the image
+    fileFormat      = img.format       
+    imageMode       = img.mode        
+    imageSize       = img.size  # (width, height)
+    colorPalette    = img.palette       
+
+    print(f'    File format: {fileFormat}')
+    print(f'    Image mode:  {imageMode}')
+    print(f'    Image size:  {imageSize}')
+    print(f'    Color pal:   {colorPalette}')
+
+    print(f'    Keys from image.info dictionary:')
+    for key, value in img.info.items():
+        print(f'      {key}')
