@@ -4,6 +4,7 @@ print(f'TensorFlow version is: {tf.version.VERSION}')
 
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
+print(f'Keras version is: {tf.keras.__version__}')
 
 import io
 import base64
@@ -21,7 +22,14 @@ from tensorflow.compat.v1 import make_tensor_proto
 from tensorflow_serving.apis import predict_pb2
 from tensorflow_serving.apis import prediction_service_pb2_grpc
 
-USE_GRPC = True
+import os
+# default to use of GRPC
+PREDICT_USING_GRPC = os.environ.get('PREDICT_USING_GRPC', 'true')
+if PREDICT_USING_GRPC == 'true':
+    USE_GRPC = True
+else:
+    USE_GRPC = False
+    
 MAX_GRPC_MESSAGE_LENGTH = 512 * 1024 * 1024
 
 HEIGHT = 224
@@ -63,9 +71,9 @@ def handler(data, context):
             
         img = img.resize((WIDTH, HEIGHT))
         img_array = image.img_to_array(img) #, data_format = "channels_first")
-        # the image is now in an array of shape (224, 224, 3)
-        # need to expand it to (1, 224, 224, 3) as it's expecting a list
-        x = tf.expand_dims(img_array, axis=0)
+        # the image is now in an array of shape (224, 224, 3) or (3, 224, 224) based on data_format
+        # need to expand it to add dim for num samples, e.g. (1, 224, 224, 3)
+        x = img_array.reshape((1,) + img_array.shape)
         instance = preprocess_input(x)
         print(f'    final image shape: {instance.shape}')
         del x, img
@@ -78,6 +86,7 @@ def handler(data, context):
         prediction = _predict_using_grpc(context, instance)
 
     else: # use TFS REST API
+        inst_json = json.dumps({'instances': instance.tolist()})
         response = requests.post(context.rest_uri, data=inst_json)
         if response.status_code != 200:
             raise Exception(response.content.decode('utf-8'))
