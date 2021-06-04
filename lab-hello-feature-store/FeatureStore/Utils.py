@@ -3,6 +3,10 @@ from sagemaker.session import Session
 from sagemaker import get_execution_role
 from sagemaker.feature_store.feature_group import FeatureGroup
 
+import uuid
+import time
+from datetime import datetime
+
 import boto3
 import json
 from time import sleep
@@ -142,6 +146,7 @@ def list_feature_groups(name_contains=None):
     if name_contains is None:
         resp = sagemaker_client.list_feature_groups()
     else:
+        ## TODO: handle pagination of results list
         resp = sagemaker_client.list_feature_groups(NameContains=name_contains)
     return resp['FeatureGroupSummaries']
 
@@ -254,9 +259,9 @@ def delete_feature_group(fg_name, delete_s3=True):
     _wait_for_feature_group_deletion_complete(fg_name)
     return 
 
-def ingest_from_df(fg_name, df):
+def ingest_from_df(fg_name, df, max_processes=4, max_workers=2, wait=True):
     fg = FeatureGroup(name=fg_name, sagemaker_session=feature_store_session)
-    fg.ingest(data_frame=df, max_workers=2, wait=True)
+    fg.ingest(data_frame=df, max_processes=max_processes, max_workers=max_workers, wait=wait)
     
 def _record_to_dict(rec, feature_types):
     tmp_dict = {}
@@ -351,19 +356,48 @@ def _get_offline_details(fg_name, s3_uri=None):
     _tmp_uri = f'{s3_uri}/query_results/'
     return _table, _database, _tmp_uri
 
+def sample(fg_name, n=10, sample_pct=25, s3_uri=None):
+    _table, _database, _tmp_uri = _get_offline_details(fg_name, s3_uri)
+    _query_string = f'SELECT * FROM "' +_table+ f'"'  + f' tablesample bernoulli({sample_pct}) limit {n}'
+    return _run_query(_query_string, _tmp_uri, _database)
+
+def query(fg_names, query, s3_uri=None):
+    _query_string = query
+    for _fg_name in fg_names:
+        _table, _database, _tmp_uri = _get_offline_details(_fg_name, s3_uri)
+        _query_string = _query_string.replace(_fg_name, _table)
+
+    return _run_query(_query_string, _tmp_uri, _database)
+
 def get_historical_record_count(fg_name, s3_uri=None):
     _table, _database, _tmp_uri = _get_offline_details(fg_name, s3_uri)
     _query_string = f'SELECT COUNT(*) FROM "' +_table+ f'"'
     _tmp_df = _run_query(_query_string, _tmp_uri, _database, verbose=False)
     return _tmp_df.iat[0, 0]
     
+def _make_where_clause(id_feature_name, id_feature_type, record_ids):
+    if id_feature_type == 'String':
+        _id_list_string = ','.join("'" + str(x) + "'" for x in record_ids)
+    else:
+        _id_list_string = ','.join(str(x) for x in record_ids)
+
+    _where_clause = f' {id_feature_name} IN ({_id_list_string})'
+    return _where_clause
+
 def get_historical_offline_feature_values(fg_name, record_ids=None, feature_names=None, s3_uri=None):
     _table, _database, _tmp_uri = _get_offline_details(fg_name, s3_uri)
     
     # construct an Athena query
     
-    id_feature_name = describe_feature_group(fg_name)['RecordIdentifierFeatureName']
-    time_feature_name = describe_feature_group(fg_name)['EventTimeFeatureName']
+    fg_resp = describe_feature_group(fg_name)
+    id_feature_name = fg_resp['RecordIdentifierFeatureName']
+    time_feature_name = fg_resp['EventTimeFeatureName']
+
+    feature_defs = fg_resp['FeatureDefinitions']
+    feature_types = {}
+    for fd in feature_defs:
+        feature_types[fd['FeatureName']] = fd['FeatureType']
+    id_feature_type = feature_types[id_feature_name]
 
     if feature_names is None:
         feature_name_string = '*'
@@ -373,8 +407,7 @@ def get_historical_offline_feature_values(fg_name, record_ids=None, feature_name
     if record_ids is None:
         where_clause = ''
     else:
-        id_list_string = ','.join(str(x) for x in record_ids)
-        where_clause = f' WHERE {id_feature_name} IN ({id_list_string})'
+        where_clause = ' WHERE ' + _make_where_clause(id_feature_name, id_feature_type, record_ids)
     
     _query_string = f'SELECT {feature_name_string} FROM "' +_table+ f'" {where_clause}'
     
@@ -385,8 +418,15 @@ def get_latest_offline_feature_values(fg_name, record_ids=None, feature_names=No
 
     # construct an Athena query
     
-    id_feature_name = describe_feature_group(fg_name)['RecordIdentifierFeatureName']
-    time_feature_name = describe_feature_group(fg_name)['EventTimeFeatureName']
+    fg_resp = describe_feature_group(fg_name)
+    id_feature_name = fg_resp['RecordIdentifierFeatureName']
+    time_feature_name = fg_resp['EventTimeFeatureName']
+
+    feature_defs = fg_resp['FeatureDefinitions']
+    feature_types = {}
+    for fd in feature_defs:
+        feature_types[fd['FeatureName']] = fd['FeatureType']
+    id_feature_type = feature_types[id_feature_name]
 
     if feature_names is None:
         feature_name_string = '*'
@@ -396,8 +436,7 @@ def get_latest_offline_feature_values(fg_name, record_ids=None, feature_names=No
     if record_ids is None:
         where_clause = ''
     else:
-        id_list_string = ','.join(str(x) for x in record_ids)
-        where_clause = f' WHERE {id_feature_name} IN ({id_list_string})'
+        where_clause = ' WHERE ' + _make_where_clause(id_feature_name, id_feature_type, record_ids)
     
     _subquery = f'SELECT *, dense_rank() OVER (PARTITION BY {id_feature_name} ' + \
                 f'ORDER BY {time_feature_name} DESC, Api_Invocation_Time DESC, write_time DESC) AS rank ' + \
@@ -416,8 +455,15 @@ def get_offline_feature_values_as_of(fg_name, as_of, record_ids=None, feature_na
 
     # construct an Athena query
     
-    id_feature_name = describe_feature_group(fg_name)['RecordIdentifierFeatureName']
-    time_feature_name = describe_feature_group(fg_name)['EventTimeFeatureName']
+    fg_resp = describe_feature_group(fg_name)
+    id_feature_name = fg_resp['RecordIdentifierFeatureName']
+    time_feature_name = fg_resp['EventTimeFeatureName']
+
+    feature_defs = fg_resp['FeatureDefinitions']
+    feature_types = {}
+    for fd in feature_defs:
+        feature_types[fd['FeatureName']] = fd['FeatureType']
+    id_feature_type = feature_types[id_feature_name]
 
     if feature_names is None:
         feature_name_string = '*'
@@ -427,16 +473,153 @@ def get_offline_feature_values_as_of(fg_name, as_of, record_ids=None, feature_na
     if record_ids is None:
         where_clause = ''
     else:
-        id_list_string = ','.join(str(x) for x in record_ids)
-        where_clause = f' WHERE {id_feature_name} IN ({id_list_string})'
+        where_clause = ' AND ' + _make_where_clause(id_feature_name, id_feature_type, record_ids)
     
     ## TODO: resolve issue with Presto and iso 8601 timestamps. partial solution provided by from_iso8601_timestamp
     ##  https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
     _subquery = f'SELECT *, dense_rank() OVER (PARTITION BY {id_feature_name} ' + \
                 f'ORDER BY {time_feature_name} DESC, Api_Invocation_Time DESC, write_time DESC) AS rank ' + \
                 f'FROM "' +_table+ f'" {where_clause}' + \
-                f"WHERE {time_feature_name} <= '{as_of.upper()}'"
+                f"WHERE {time_feature_name} <= '{as_of.upper()}'" + where_clause
 ##                f"WHERE {time_feature_name} <= TIMESTAMP '{as_of.upper()}'"
     _query_string = f'SELECT {feature_name_string} FROM ({_subquery}) WHERE rank = 1 AND NOT is_deleted'
 
     return _run_query(_query_string, _tmp_uri, _database)
+
+
+def _update_flow(s3_file_to_ingest, bucket, flow_location):
+    flow_json = {'metadata': {'version': 1},
+                 'nodes': [
+                     {'node_id': '7f6515d7-7ea4-48ba-98ce-5b32c73306e6',
+                           'type': 'SOURCE',
+                           'operator': 'sagemaker.s3_source_0.1',
+                           'parameters': {'dataset_definition': {'__typename': 'S3CreateDatasetDefinitionOutput',
+                             'datasetSourceType': 'S3',
+                             'name': s3_file_to_ingest.split('/')[-1],
+                             'description': None,
+                             's3ExecutionContext': {'__typename': 'S3ExecutionContext',
+                              's3Uri': s3_file_to_ingest,
+                              's3ContentType': 'csv',
+                              's3HasHeader': True}}},
+                           'inputs': [],
+                           'outputs': [{'name': 'default'}]
+                     },
+                     {'node_id': 'e6a71ea2-dd1e-477f-964a-03238f974a35',
+                           'type': 'TRANSFORM',
+                           'operator': 'sagemaker.spark.infer_and_cast_type_0.1',
+                           'parameters': {},
+                           'trained_parameters': {},
+                           'inputs': [{'name': 'default',
+                             'node_id': '7f6515d7-7ea4-48ba-98ce-5b32c73306e6',
+                             'output_name': 'default'}],
+                           'outputs': [{'name': 'default'}]
+                     }]
+                }
+
+    with open('tmp.flow', 'w') as f:
+        json.dump(flow_json, f)
+    
+    s3_client = boto3.client('s3')
+    s3_client.upload_file('tmp.flow', bucket, flow_location)
+    os.remove('tmp.flow')
+    return flow_json
+
+def _create_flow_notebook_processing_input(base_dir, flow_s3_uri):
+    return {
+        "InputName": "flow",
+        "S3Input": {
+            "LocalPath": f"{base_dir}/flow",
+            "S3Uri": flow_s3_uri,
+            "S3DataType": "S3Prefix",
+            "S3InputMode": "File",
+        },
+    }
+
+def _create_s3_processing_input(base_dir, name, dataset_definition):
+    return {
+        "InputName": name,
+        "S3Input": {
+            "LocalPath": f"{base_dir}/{name}",
+            "S3Uri": dataset_definition["s3ExecutionContext"]["s3Uri"],
+            "S3DataType": "S3Prefix",
+            "S3InputMode": "File",
+        },
+    }
+
+def _create_processing_inputs(processing_dir, flow, flow_uri):
+    """Helper function for creating processing inputs
+    :param flow: loaded data wrangler flow notebook
+    :param flow_uri: S3 URI of the data wrangler flow notebook
+    """
+    processing_inputs = []
+    flow_processing_input = _create_flow_notebook_processing_input(processing_dir, flow_uri)
+    processing_inputs.append(flow_processing_input)
+
+    for node in flow["nodes"]:
+        if "dataset_definition" in node["parameters"]:
+            data_def = node["parameters"]["dataset_definition"]
+            name = data_def["name"]
+            source_type = data_def["datasetSourceType"]
+
+            if source_type == "S3":
+                s3_processing_input = _create_s3_processing_input(
+                    processing_dir, name, data_def)
+                processing_inputs.append(s3_processing_input)
+            else:
+                raise ValueError(f"{source_type} is not supported for Data Wrangler Processing.")
+    return processing_inputs
+
+def ingest_with_dw(new_file_to_ingest, feature_group_name, 
+                   instance_count=1, instance_type='ml.m5.4xlarge', prefix='data_wrangler_flows',
+                   bucket=None, iam_role=None, processing_job_name=None, ):
+    sess = sagemaker.Session()
+    if bucket is None:
+        bucket = sess.default_bucket()
+    if iam_role is None:
+        iam_role = sagemaker.get_execution_role()
+    if processing_job_name is None:
+        curr_timestamp = int(datetime.now().timestamp())    
+        processing_job_name = f'dw-ingest-{curr_timestamp}'
+
+    if region == 'us-east-1':
+        container_uri = "663277389841.dkr.ecr.us-east-1.amazonaws.com/sagemaker-data-wrangler-container:1.3.1"
+    elif region == 'us-east-2':
+        container_uri = "415577184552.dkr.ecr.us-east-2.amazonaws.com/sagemaker-data-wrangler-container:1.3.0"
+    processing_dir = "/opt/ml/processing"
+
+    flow_id = f"{time.strftime('%d-%H-%M-%S', time.gmtime())}-{str(uuid.uuid4())[:8]}"
+    flow_name = f'flow-{flow_id}'
+    flow_location = f'{prefix}/{flow_name}.flow'
+    flow_uri = f's3://{bucket}/{flow_location}'
+
+    flow = _update_flow(new_file_to_ingest, bucket, flow_location)
+    processingResources = {
+            'ClusterConfig': {
+                'InstanceCount': instance_count,
+                'InstanceType': instance_type,
+                'VolumeSizeInGB': 30
+            }
+        }
+
+    appSpecification = {'ImageUri': container_uri}
+
+    sagemaker_client = boto3.client("sagemaker")
+    sagemaker_client.create_processing_job(
+            ProcessingInputs=_create_processing_inputs(processing_dir, flow, flow_uri),
+            ProcessingOutputConfig={
+                'Outputs': [
+                    {
+                        'OutputName': 'e6a71ea2-dd1e-477f-964a-03238f974a35.default',
+                        'FeatureStoreOutput': {
+                            'FeatureGroupName': feature_group_name
+                        },
+                        'AppManaged': True
+                    }
+                ],
+            },
+            ProcessingJobName=processing_job_name,
+            ProcessingResources=processingResources,
+            AppSpecification=appSpecification,
+            RoleArn=iam_role
+        )
+    return processing_job_name
