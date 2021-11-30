@@ -1,0 +1,291 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack for running Feature Store offline compaction utility
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  S3Bucket:
+    Type: String
+    Default: "bucket-name"
+  S3Prefix:
+    Type: String
+    Default: "prefix1/prefix2"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: S3 Location to lambda code and pyspark script
+        Parameters:
+          - S3Bucket
+          - S3Prefix
+    ParameterLabels:
+      S3Bucket:
+        default: Bucket name where code is located
+      S3Prefix:
+        default: Prefix path where code is located - (Folder path within the bucket without leading or trailing slash)
+Outputs:
+  LambdaRoleARN:
+    Description: Role for Lambda execution.
+    Value:
+      !GetAtt LambdaRole.Arn
+  SagemakerRoleARN:
+    Description: Role for Sagemaker execution.
+    Value:
+      !GetAtt SageMakerRole.Arn
+  FeatureStoreCompactLambdaFunctionName:
+    Description: FeatureStoreCompact Lambda function Name.
+    Value:
+      !Ref FeatureStoreCompactLambdaFunction
+  FeatureStoreCompactLambdaFunctionARN:
+    Description: FeatureStoreCompact Lambda function ARN.
+    Value:
+      !GetAtt FeatureStoreCompactLambdaFunction.Arn
+  FeatureStoreJobMonitorLambdaFunctionName:
+    Description: FeatureStoreJobMonitor Lambda function Name.
+    Value:
+      !Ref FeatureStoreJobMonitorLambdaFunction
+  FeatureStoreJobMonitorLambdaFunctionARN:
+    Description: FeatureStoreJobMonitor Lambda function ARN.
+    Value:
+      !GetAtt FeatureStoreJobMonitorLambdaFunction.Arn
+  StepFunctionARN:
+    Description: Step Function ARN.
+    Value:
+      !GetAtt FeatureStoreCompactionStateMachine.Arn
+Conditions:
+  UsePrefix: !Not [!Equals [!Ref S3Prefix, ""]]
+Mappings:
+  RegionMap:
+    us-east-1:
+      sparkimage: 173754725891.dkr.ecr.us-east-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    us-west-2:
+      sparkimage: 153931337802.dkr.ecr.us-west-2.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    us-east-2:
+      sparkimage: 314815235551.dkr.ecr.us-east-2.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    us-west-1:
+      sparkimage: 667973535471.dkr.ecr.us-west-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-northeast-1:
+      sparkimage: 411782140378.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-northeast-2:
+      sparkimage: 860869212795.dkr.ecr.ap-northeast-2.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-east-1:
+      sparkimage: 732049463269.dkr.ecr.ap-east-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-south-1:
+      sparkimage: 105495057255.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-southeast-1:
+      sparkimage: 759080221371.dkr.ecr.ap-southeast-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ap-southeast-2:
+      sparkimage: 440695851116.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    me-south-1:
+      sparkimage: 750251592176.dkr.ecr.me-south-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    sa-east-1:
+      sparkimage: 737130764395.dkr.ecr.sa-east-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    ca-central-1:
+      sparkimage: 446299261295.dkr.ecr.ca-central-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-central-1:
+      sparkimage: 906073651304.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-north-1:
+      sparkimage: 330188676905.dkr.ecr.eu-north-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-west-1:
+      sparkimage: 571004829621.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-west-2:
+      sparkimage: 836651553127.dkr.ecr.eu-west-2.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-west-3:
+      sparkimage: 136845547031.dkr.ecr.eu-west-3.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    af-south-1:
+      sparkimage: 309385258863.dkr.ecr.af-south-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    eu-south-1:
+      sparkimage: 753923664805.dkr.ecr.eu-south-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    us-gov-west-1:
+      sparkimage: 271483468897.dkr.ecr.us-gov-west-1.amazonaws.com/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    cn-northwest-1:
+      sparkimage: 844356804704.dkr.ecr.cn-northwest-1.amazonaws.com.cn/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+    cn-north-1:
+      sparkimage: 671472414489.dkr.ecr.cn-north-1.amazonaws.com.cn/sagemaker-spark-processing:3.0-cpu-py37-v1.0
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: FeatureStoreCompactionLambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+  SageMakerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: FeatureStoreCompactionSageMakerRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - sagemaker.amazonaws.com
+            Action:
+            - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: 'StepFunctionRole'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ["states.amazonaws.com"]
+          Action: ['sts:AssumeRole']
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Path: /
+  EventBridgeTargetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: 'EventBridgeTargetRole'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ["events.amazonaws.com"]
+          Action: ['sts:AssumeRole']
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess
+      Path: /
+  FeatureStoreCompactLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: sm-featurestore-offline-compact
+      Description: Lambda function to trigger SageMaker processing job to compact offline feature storage files
+      Timeout: 300
+      Architectures:
+      - arm64
+      Handler: sm-featurestore-offline-compact.handle
+      Runtime: python3.9
+      PackageType: Zip
+      CodeUri:
+        Bucket: !Ref S3Bucket
+        Key:
+          !If [UsePrefix, !Sub '${S3Prefix}/sm-featurestore-offline-compact.zip', sm-featurestore-offline-compact.zip]
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          SAGEMAKER_INSTANCE_COUNT: 1
+          SAGEMAKER_INSTANCE_TYPE: ml.m5.4xlarge
+          SAGEMAKER_ROLE: !GetAtt SageMakerRole.Arn
+          SAGEMAKER_INSTANCE_VOLUME_SIZE: 30
+          SPARK_CONTAINER_IMAGE: !FindInMap [RegionMap, !Ref "AWS::Region", sparkimage]
+          PYSPARK_SCRIPT_PATH: !If [UsePrefix, !Sub 's3://${S3Bucket}/${S3Prefix}/sm-featurestore_offline_compact_spark.py', !Sub 's3://${S3Bucket}/sm-featurestore_offline_compact_spark.py']
+  FeatureStoreJobMonitorLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: sm-featurestore-offline-job-monitor
+      Description: Lambda function to monitor status of SageMaker Processing Job
+      Timeout: 300
+      Architectures:
+      - arm64
+      Handler: sm-featurestore-offline-job-monitor.handle
+      Runtime: python3.9
+      PackageType: Zip
+      CodeUri:
+        Bucket: !Ref S3Bucket
+        Key: !If [UsePrefix, !Sub '${S3Prefix}/sm-featurestore-offline-job-monitor.zip', sm-featurestore-offline-job-monitor.zip]
+      Role: !GetAtt LambdaRole.Arn
+  FeatureStoreCompactionStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: sm-featurestore-offline-compact
+      DefinitionString: !Sub |
+        {
+          "Comment": "FeatureStore Offline Compaction step functions",
+          "StartAt": "StartCompaction",
+          "States": {
+            "StartCompaction": {
+              "Comment": "This step triggers lambda function that kicks off a SageMaker Processing Job.",
+              "Type": "Task",
+              "Resource": "${FeatureStoreCompactLambdaFunction.Arn}",
+              "Parameters": {
+                "feature_group_name.$": "$.feature_group_name",
+                "compact_mode.$": "$.compact_mode",
+                "partition_mode.$": "$.partition_mode",
+                "compact_uri.$": "$.compact_uri",
+                "year.$": "$.year",
+                "month.$": "$.month",
+                "day.$": "$.day"
+              },
+              "Next": "Wait"
+            },
+            "Wait": {
+              "Type": "Wait",
+              "Seconds": 60,
+              "Next": "GetCompactionStatus"
+            },
+            "GetCompactionStatus": {
+              "Type": "Task",
+              "Resource": "${FeatureStoreJobMonitorLambdaFunction.Arn}",
+              "Parameters": {
+                "ProcessingJobName.$": "$.ProcessingJobName"
+              },
+              "Next": "IsDone?"
+            },
+            "IsDone?": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.ProcessingJobStatus",
+                  "StringEquals": "Completed",
+                  "Next": "Success"
+                },
+                {
+                  "Variable": "$.ProcessingJobStatus",
+                  "StringEquals": "Failed",
+                  "Next": "Failure"
+                }
+              ],
+              "Default": "Wait"
+            },
+            "Success": {
+              "Type": "Pass",
+              "End": true
+            },
+            "Failure": {
+              "Type": "Fail"
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionRole.Arn
+  FeatureStoreEventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Rule for running feature store offline compaction utility
+      EventBusName: default
+      Name: sm-featurestore-compaction-schedule
+      ScheduleExpression: rate(24 hours)
+      State: DISABLED
+      Targets:
+        - Arn: !GetAtt FeatureStoreCompactionStateMachine.Arn
+          RoleArn: !GetAtt EventBridgeTargetRole.Arn
+          Id: sm-featurestore-offline-compaction-target
+          Input: |
+            {
+              "feature_group_name":"feature-group-name",
+              "compact_mode":"full|incremental|day",
+              "partition_mode":"hour|day",
+              "compact_uri":"",
+              "year":"",
+              "month":"",
+              "day":""
+            }
